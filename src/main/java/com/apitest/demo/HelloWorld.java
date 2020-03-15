@@ -3,8 +3,10 @@ package com.apitest.demo;
 
 import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.annotation.JsonAlias;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @Controller
@@ -30,7 +33,7 @@ public class HelloWorld {
         String host = "http://character.market.alicloudapi.com";
         String path = "/ln/tag/personal/character_keyword/1.0";
         String method = "POST";
-        String appcode = "5af85ac5be714d9b924e73d20c622faa";
+        String appcode = "a7f9da62685341b08fa9d31644ff8365";
         Map<String, String> headers = new HashMap<String, String>();
         //最后在header中的格式(中间是英文空格)为Authorization:APPCODE 83359fd73fe94948385f570e3c139105
         headers.put("Authorization", "APPCODE " + appcode);
@@ -51,10 +54,19 @@ public class HelloWorld {
              * https://github.com/aliyun/api-gateway-demo-sign-java/blob/master/pom.xml
              */
             HttpResponse response = HttpUtils.doPost(host, path, method, headers, querys, bodys);
-            //获取response的body
-            //System.out.println(EntityUtils.toString(response.getEntity()));
+            Locale locale = response.getLocale();
+            StatusLine statusLine = response.getStatusLine();
             HttpEntity entity = response.getEntity();
-            System.out.println("==================" + EntityUtils.toString(entity));
+            Header header = response.getFirstHeader("X-Ca-Error-Message");
+            System.out.println("====================X-Ca-Error-Message: " + JSON.toJSON(response.getHeaders("X-Ca-Error-Message")));
+            System.out.println("====================local: " + JSON.toJSONString(locale));
+            System.out.println("====================statusLine: " + JSON.toJSONString(statusLine));
+            System.out.println("====================entity:" + JSON.toJSONString(entity));
+            if(statusLine.getStatusCode() != 200 && header != null) {
+                System.out.println("错误信息：" + header.getValue());
+            } else {
+                System.out.println("返回结果：" + EntityUtils.toString(entity,"utf-8"));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
